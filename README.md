@@ -1,19 +1,19 @@
-这是一个演示如何使用 PHP 的原生 Socket 扩展进行网络编程的示例。该示例包含了建立连接、发送和接收数据的基本操作。
+这是一个演示如何使用 `PHP` 的原生 `Socket` 扩展进行网络编程的示例。该示例包含了建立连接、发送和接收数据的基本操作。
 
 # 环境要求
 
-- PHP 8.1 或更高版本
-- 安装了 Socket 扩展（通常在 PHP 默认安装中包含）
+- `PHP` 8.1 或更高版本
+- 安装了 `Socket` 扩展（通常在 PHP 默认安装中包含）
 
 # 使用方法
 
-- 命令行下, 执行 composer 命令安装:
+- 命令行下, 执行 `composer` 命令安装:
 
 ```shell
 composer require jundayw/socket
 ```
 
-- 打开 Server.php 文件，修改以下代码中的 IP 地址和端口号：
+- 打开 `Server.php` 文件，修改以下代码中的 IP 地址和端口号：
 
 ```php
 use Jundayw\Socket\SocketServer;
@@ -77,7 +77,7 @@ try {
 }
 ```
 
-- 打开 client.php 文件，修改以下代码中的 IP 地址和端口号：
+- 打开 `Client.php` 文件，修改以下代码中的 IP 地址和端口号：
 
 ```php
 use Jundayw\Socket\SocketClient;
