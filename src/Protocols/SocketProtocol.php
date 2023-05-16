@@ -30,6 +30,28 @@ abstract class SocketProtocol
     public ?Closure $onMessage = null;         // 数据监听回调函数
     public ?Closure $onDisconnect = null;      // 断开连接监听回调函数
 
+    protected array $attributes = [];
+
+    public function __get(string $name)
+    {
+        return $this->attributes[$name] ?? null;
+    }
+
+    public function __set(string $name, $value): void
+    {
+        $this->attributes[$name] = $value;
+    }
+
+    public function __isset(string $name): bool
+    {
+        return isset($this->attributes[$name]);
+    }
+
+    public function __unset(string $name): void
+    {
+        unset($this->attributes[$name]);
+    }
+
     /**
      * @return int
      */
