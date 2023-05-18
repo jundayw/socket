@@ -109,20 +109,27 @@ class SocketServer extends SocketProtocol
      *
      * @param Socket $socket
      * @param int|null $uid
+     * @param null $alias
      * @return object|null
      */
-    public function bind(Socket $socket, int $uid = null): ?object
+    public function bind(Socket $socket, int $uid = null, $alias = null): ?object
     {
         if (is_null($connection = $this->getPeerName($socket))) {
             return null;
         }
-        return $this->connections[$connection] = new class($uid, $socket) {
+        return $this->connections[$connection] = new class($uid, $socket, $alias = null) {
             public function __construct(
-                private readonly int    $uid,
                 private readonly Socket $socket,
+                private readonly int    $uid,
+                private readonly mixed  $alias,
             )
             {
                 //
+            }
+
+            public function socket(): Socket
+            {
+                return $this->socket;
             }
 
             public function getUID(): int
@@ -130,9 +137,9 @@ class SocketServer extends SocketProtocol
                 return $this->uid;
             }
 
-            public function socket(): Socket
+            public function getAlias(): mixed
             {
-                return $this->socket;
+                return $this->alias;
             }
         };
     }
