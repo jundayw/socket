@@ -60,25 +60,26 @@ class SocketServer extends SocketProtocol
             throw new Exception("Failed to listen on socket: " . socket_strerror(socket_last_error()));
         }
 
-        $this->clients[] = $this->getMaster();
-
-        while ($this->clients) {
-            $sockets = $this->clients;
+        while (true) {
+            $sockets = [$this->getMaster()];
             $write   = $except = null;
+
+            $sockets = array_merge($sockets, $this->getClients());
 
             if (socket_select($sockets, $write, $except, null) === false) {
                 throw new Exception("Failed to select socket: " . socket_strerror(socket_last_error()));
             }
 
+            // 接收客户端的连接
+            if (in_array($this->getMaster(), $sockets)) {
+                if ($client = socket_accept($this->getMaster())) {
+                    $this->clients[] = $client;
+                    $this->onConnect($client);
+                }
+                continue;
+            }
+
             foreach ($sockets as $socket) {
-                // 接收客户端的连接
-                if ($socket == $this->getMaster()) {
-                    if ($client = socket_accept($this->getMaster())) {
-                        $this->clients[] = $client;
-                        $this->onConnect($client);
-                    }
-                    continue;
-                };
                 // 接收客户端的数据
                 if (socket_recv($socket, $buffer, $this->getLength(), MSG_PEEK) === false || is_null($buffer)) {
                     $this->onDisconnect($socket);
@@ -96,7 +97,7 @@ class SocketServer extends SocketProtocol
         socket_close($this->getMaster());
     }
 
-    private function getPeerName(Socket $socket): ?string
+    public function getPeerName(Socket $socket): ?string
     {
         if (!socket_getpeername($socket, $address, $port)) {
             return null;
@@ -108,16 +109,16 @@ class SocketServer extends SocketProtocol
      * 绑定 UID 到连接
      *
      * @param Socket $socket
-     * @param int|null $uid
-     * @param null $alias
+     * @param int $uid
+     * @param mixed $alias
      * @return object|null
      */
-    public function bind(Socket $socket, int $uid = null, $alias = null): ?object
+    public function bind(Socket $socket, int $uid, mixed $alias = null): ?object
     {
         if (is_null($connection = $this->getPeerName($socket))) {
             return null;
         }
-        return $this->connections[$connection] = new class($uid, $socket, $alias = null) {
+        return $this->connections[$connection] = new class($socket, $uid, $alias = null) {
             public function __construct(
                 private readonly Socket $socket,
                 private readonly int    $uid,
@@ -161,7 +162,7 @@ class SocketServer extends SocketProtocol
     }
 
     /**
-     * 获取 UID 及连接
+     * 获取 UID
      *
      * @param Socket $socket
      * @return int|null
@@ -172,5 +173,51 @@ class SocketServer extends SocketProtocol
             return null;
         }
         return $this->connections[$connection]?->getUID();
+    }
+
+    /**
+     * 获取 Alias
+     *
+     * @param Socket $socket
+     * @return mixed
+     */
+    public function getClientAlias(Socket $socket): mixed
+    {
+        if (is_null($connection = $this->getPeerName($socket)) || !array_key_exists($connection, $this->connections)) {
+            return null;
+        }
+        return $this->connections[$connection]?->getAlias();
+    }
+
+    /**
+     * 通过 UID 获取 Socket
+     *
+     * @param int|null $uid
+     * @return Socket|null
+     */
+    public function getSocketByClientUID(int $uid = null): ?Socket
+    {
+        foreach ($this->connections as $connection) {
+            if ($connection->getUID() == $uid) {
+                return $connection->socket();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 通过 Alias 获取 Socket
+     *
+     * @param $alias
+     * @return Socket|null
+     */
+    public function getSocketByClientAlias($alias = null): ?Socket
+    {
+        foreach ($this->connections as $connection) {
+            if ($connection->getAlias() == $alias) {
+                return $connection->socket();
+            }
+        }
+        return null;
     }
 }
