@@ -118,7 +118,7 @@ class SocketServer extends SocketProtocol
         if (is_null($connection = $this->getPeerName($socket))) {
             return null;
         }
-        return $this->connections[$connection] = new class($socket, $uid, $alias = null) {
+        return $this->connections[$connection] = new class($socket, $uid, $alias) {
             public function __construct(
                 private readonly Socket $socket,
                 private readonly int    $uid,
