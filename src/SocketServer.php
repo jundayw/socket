@@ -80,8 +80,12 @@ class SocketServer extends SocketProtocol
             }
 
             foreach ($sockets as $socket) {
-                // 接收客户端的数据
-                if (socket_recv($socket, $buffer, $this->getLength(), MSG_PEEK) === false || is_null($buffer)) {
+                try {
+                    // 接收客户端的数据
+                    if (socket_recv($socket, $buffer, $this->getLength(), MSG_PEEK) === false || is_null($buffer)) {
+                       throw new Exception('socket_close');
+                    }
+                }catch (Exception $exception){
                     $this->onDisconnect($socket);
                     $this->clients = array_filter($this->clients, function ($client) use ($socket) {
                         return $client != $socket;
